@@ -1,3 +1,20 @@
 spring:
   application:
     name: devflow
+
+  datasource:
+    # Kết nối qua "đường hầm" localhost:5432 vào database devflow
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:devflow}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    # Tự động tạo/cập nhật bảng vật lý trong DB dựa trên các Class Entity Java bạn viết
+    hibernate:
+      ddl-auto: update
+    # Bật tính năng này để Spring gõ câu lệnh SQL nào xuống DB thì sẽ in ra Terminal cho bạn xem để học tập
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
