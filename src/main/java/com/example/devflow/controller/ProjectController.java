@@ -33,6 +33,9 @@ public class ProjectController {
 
     @GetMapping
     @Operation(summary = "Get all projects", description = "Returns a paginated list of all projects")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Projects retrieved successfully")
+    })
     public ResponseEntity<ApiResponse<Page<ProjectResponse>>> getAllProjects(Pageable pageable) {
         Page<ProjectResponse> projects = projectService.getAllProjects(pageable);
         return ResponseEntity.ok(ApiResponse.success(projects));

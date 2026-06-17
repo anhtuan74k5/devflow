@@ -35,6 +35,9 @@ public class TaskController {
 
     @GetMapping
     @Operation(summary = "Get tasks by project", description = "Returns a paginated list of tasks, optionally filtered by status")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tasks retrieved successfully")
+    })
     public ResponseEntity<ApiResponse<Page<TaskResponse>>> getTasks(
             @PathVariable Long projectId,
             @RequestParam(required = false) TaskStatus status,
