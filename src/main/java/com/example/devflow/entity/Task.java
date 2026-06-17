@@ -13,6 +13,7 @@ import lombok.Data;
 })
 @Data
 public class Task {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,13 +21,13 @@ public class Task {
     @Column(nullable = false)
     private String title;
 
-    private String description;  
+    private String description;
 
     @Enumerated(EnumType.STRING)
-    private TaskStatus status = TaskStatus.TODO; // TODO, IN_PROGRESS, DONE
+    private TaskStatus status = TaskStatus.TODO;
 
     @Enumerated(EnumType.STRING)
-    private TaskPriority priority = TaskPriority.MEDIUM; // LOW, MEDIUM, HIGH, CRITICAL
+    private TaskPriority priority = TaskPriority.MEDIUM;
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
@@ -35,4 +36,7 @@ public class Task {
     @ManyToOne
     @JoinColumn(name = "assignee_id")
     private User assignee;
+
+    @Version
+    private Long version;
 }
