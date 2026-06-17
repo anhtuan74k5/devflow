@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -41,7 +42,7 @@ public class TaskController {
     public ResponseEntity<ApiResponse<Page<TaskResponse>>> getTasks(
             @PathVariable Long projectId,
             @RequestParam(required = false) TaskStatus status,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         Page<TaskResponse> tasks = taskService.getTasksByProject(projectId, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(tasks));
     }

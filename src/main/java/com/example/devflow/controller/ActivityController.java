@@ -6,6 +6,7 @@ import com.example.devflow.service.ActivityLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -30,11 +31,12 @@ public class ActivityController {
 
     @GetMapping
     @Operation(summary = "Get activity logs", description = "Returns a paginated list of activity logs for a project, sorted by creation time descending")
-    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+    @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Activities retrieved successfully")
     })
     public ResponseEntity<ApiResponse<Page<ActivityLogResponse>>> getActivities(
-            @PathVariable Long projectId, Pageable pageable) {
+            @PathVariable Long projectId,
+            @ParameterObject Pageable pageable) {
         Page<ActivityLogResponse> logs = activityLogService.getLogsByProject(projectId, pageable);
         return ResponseEntity.ok(ApiResponse.success(logs));
     }
