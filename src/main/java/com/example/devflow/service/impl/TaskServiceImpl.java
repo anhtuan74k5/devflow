@@ -65,6 +65,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public TaskResponse createTask(Long projectId, CreateTaskRequest request) {
         Project project = findProjectOrThrow(projectId);
         checkProjectAccess(project);
@@ -89,6 +90,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public TaskResponse updateTask(Long projectId, Long taskId, CreateTaskRequest request) {
         Project project = findProjectOrThrow(projectId);
         checkProjectAccess(project);
@@ -117,6 +119,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public TaskResponse updateTaskStatus(Long projectId, Long taskId, UpdateTaskStatusRequest request) {
         Task task = findTaskOrThrow(projectId, taskId);
+        Project project = task.getProject();
+        checkProjectAccess(project);
         task.setStatus(request.getStatus());
         Task saved = taskRepository.save(task);
         return toTaskResponse(saved);

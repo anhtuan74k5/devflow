@@ -39,7 +39,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        HttpStatus status = "Authentication required".equals(ex.getMessage())
+                ? HttpStatus.UNAUTHORIZED
+                : HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 

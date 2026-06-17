@@ -2,6 +2,7 @@ package com.example.devflow.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 @Entity
 @Table(name = "projects")
@@ -18,5 +19,6 @@ public class Project {
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
+    @ToString.Exclude
     private User owner;
 }

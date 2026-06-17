@@ -6,7 +6,6 @@ import com.example.devflow.dto.request.RegisterRequest;
 import com.example.devflow.dto.response.AuthResponse;
 import com.example.devflow.entity.User;
 import com.example.devflow.exception.BusinessException;
-import com.example.devflow.exception.ResourceNotFoundException;
 import com.example.devflow.model.Role;
 import com.example.devflow.repository.UserRepository;
 import com.example.devflow.service.AuthService;
@@ -88,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResourceNotFoundException("No authenticated user found");
+            throw new BusinessException("Authentication required");
         }
         return (User) authentication.getPrincipal();
     }
