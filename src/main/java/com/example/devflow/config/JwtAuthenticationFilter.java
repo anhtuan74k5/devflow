@@ -10,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -22,8 +21,11 @@ import java.io.IOException;
  * and sets the SecurityContext if valid. Uses {@link JwtUtil} for all
  * token operations — this filter only orchestrates the authentication flow.
  * Extends OncePerRequestFilter to guarantee single execution per request.
+ * <p>
+ * Not annotated with @Component — registered explicitly as a bean in
+ * {@link SecurityConfig} to avoid auto-discovery in @WebMvcTest slices
+ * that don't have UserDetailsService available.
  */
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
