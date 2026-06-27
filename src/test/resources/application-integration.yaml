@@ -1,0 +1,13 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: dGVzdC1zZWNyZXQta2V5LWZvci1kZXZmbG93LWFwcGxpY2F0aW9uLXRlc3Rpbmc=
+  expiration-ms: 86400000
