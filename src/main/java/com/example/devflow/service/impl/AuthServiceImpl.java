@@ -45,7 +45,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
+        String username = request.getUsername();
+        String password = request.getPassword();
+
+        if (username == null || username.isBlank()) {
+            throw new BusinessException("Username must not be blank");
+        }
+        if (username.length() < 3) {
+            throw new BusinessException("Username must be at least 3 characters");
+        }
+        if (password == null || password.isBlank()) {
+            throw new BusinessException("Password must not be blank");
+        }
+        if (password.length() < 6) {
+            throw new BusinessException("Password must be at least 6 characters");
+        }
+
+        if (userRepository.existsByUsername(username)) {
             throw new BusinessException("Username already exists");
         }
 
@@ -66,11 +82,24 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
+        String username = request.getUsername();
+        String password = request.getPassword();
+
+        if (username == null || username.isBlank()) {
+            throw new BusinessException("Username must not be blank");
+        }
+        if (username.length() < 3) {
+            throw new BusinessException("Username must be at least 3 characters");
+        }
+        if (password == null || password.isBlank()) {
+            throw new BusinessException("Password must not be blank");
+        }
+        if (password.length() < 6) {
+            throw new BusinessException("Password must be at least 6 characters");
+        }
+
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
+                new UsernamePasswordAuthenticationToken(username, password)
         );
 
         User user = (User) authentication.getPrincipal();

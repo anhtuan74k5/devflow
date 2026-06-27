@@ -75,12 +75,14 @@ class ProjectServiceImplTest {
 
         ProjectResponse response = projectService.createProject(request);
 
-        assertNotNull(response);
-        assertEquals(1L, response.getId());
-        assertEquals("My Project", response.getName());
-        assertEquals("Description of My Project", response.getDescription());
-        assertEquals(1L, response.getOwnerId());
-        assertEquals("currentuser", response.getOwnerUsername());
+        assertAll("project response",
+                () -> assertNotNull(response),
+                () -> assertEquals(1L, response.getId()),
+                () -> assertEquals("My Project", response.getName()),
+                () -> assertEquals("Description of My Project", response.getDescription()),
+                () -> assertEquals(1L, response.getOwnerId()),
+                () -> assertEquals("currentuser", response.getOwnerUsername())
+        );
 
         verify(authService).getCurrentUser();
         verify(projectRepository).save(any(Project.class));

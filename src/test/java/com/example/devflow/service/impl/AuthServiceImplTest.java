@@ -11,6 +11,8 @@ import com.example.devflow.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -145,5 +147,47 @@ class AuthServiceImplTest {
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verifyNoInteractions(jwtUtil);
+    }
+
+    @ParameterizedTest(name = "register: invalid input \"{0}\" / \"{1}\" → throws BusinessException")
+    @CsvSource({
+            "'', password123, Username must not be blank",
+            "ab, password123, Username must be at least 3 characters",
+            "validuser, '', Password must not be blank",
+            "validuser, 12345, Password must be at least 6 characters"
+    })
+    @DisplayName("register: invalid input → throws BusinessException")
+    void register_fail_invalidInput(String username, String password, String expectedMessage) {
+        RegisterRequest request = RegisterRequest.builder()
+                .username(username)
+                .password(password)
+                .build();
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> authService.register(request));
+
+        assertEquals(expectedMessage, exception.getMessage());
+        verifyNoInteractions(userRepository, passwordEncoder, jwtUtil);
+    }
+
+    @ParameterizedTest(name = "login: invalid input \"{0}\" / \"{1}\" → throws BusinessException")
+    @CsvSource({
+            "'', password123, Username must not be blank",
+            "ab, password123, Username must be at least 3 characters",
+            "validuser, '', Password must not be blank",
+            "validuser, 12345, Password must be at least 6 characters"
+    })
+    @DisplayName("login: invalid input → throws BusinessException")
+    void login_fail_invalidInput(String username, String password, String expectedMessage) {
+        LoginRequest request = LoginRequest.builder()
+                .username(username)
+                .password(password)
+                .build();
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> authService.login(request));
+
+        assertEquals(expectedMessage, exception.getMessage());
+        verifyNoInteractions(authenticationManager, jwtUtil);
     }
 }
