@@ -8,6 +8,7 @@ import com.example.devflow.entity.Task;
 import com.example.devflow.entity.User;
 import com.example.devflow.exception.AccessDeniedException;
 import com.example.devflow.exception.ResourceNotFoundException;
+import com.example.devflow.model.Role;
 import com.example.devflow.model.TaskStatus;
 import com.example.devflow.repository.ProjectRepository;
 import com.example.devflow.repository.TaskRepository;
@@ -145,8 +146,15 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
     }
 
+    /**
+     * Checks if the current user is allowed to modify tasks in the project.
+     * Owner is always allowed. ADMIN users bypass the owner check.
+     */
     private void checkProjectAccess(Project project) {
         User currentUser = authService.getCurrentUser();
+        if (currentUser.getRole() == Role.ROLE_ADMIN) {
+            return;
+        }
         if (!project.getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You are not the owner of this project");
         }

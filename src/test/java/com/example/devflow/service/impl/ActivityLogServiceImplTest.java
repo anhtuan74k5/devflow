@@ -4,10 +4,12 @@ import com.example.devflow.dto.response.ActivityLogResponse;
 import com.example.devflow.entity.ActivityLog;
 import com.example.devflow.entity.Project;
 import com.example.devflow.entity.User;
+import com.example.devflow.exception.AccessDeniedException;
 import com.example.devflow.exception.ResourceNotFoundException;
 import com.example.devflow.model.Role;
 import com.example.devflow.repository.ActivityLogRepository;
 import com.example.devflow.repository.ProjectRepository;
+import com.example.devflow.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,15 +37,29 @@ class ActivityLogServiceImplTest {
     @Mock
     private ProjectRepository projectRepository;
 
+    @Mock
+    private AuthService authService;
+
     @InjectMocks
     private ActivityLogServiceImpl activityLogService;
 
-    private Project createProject() {
+    private User createOwner() {
         User owner = new User();
         owner.setId(1L);
         owner.setUsername("owner");
         owner.setRole(Role.ROLE_USER);
+        return owner;
+    }
 
+    private User createAdmin() {
+        User admin = new User();
+        admin.setId(2L);
+        admin.setUsername("admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        return admin;
+    }
+
+    private Project createProject(User owner) {
         Project project = new Project();
         project.setId(10L);
         project.setName("Test Project");
@@ -63,7 +79,7 @@ class ActivityLogServiceImplTest {
     @Test
     @DisplayName("createLog: valid project → returns ActivityLogResponse")
     void createLog_success() {
-        Project project = createProject();
+        Project project = createProject(createOwner());
         when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
 
         ActivityLog savedLog = createLog(project);
@@ -100,9 +116,10 @@ class ActivityLogServiceImplTest {
     }
 
     @Test
-    @DisplayName("getLogsByProject: returns paginated logs sorted by createdAt DESC")
-    void getLogsByProject_success() {
-        Project project = createProject();
+    @DisplayName("getLogsByProject: owner views logs → returns paginated logs")
+    void getLogsByProject_owner_success() {
+        User owner = createOwner();
+        Project project = createProject(owner);
         ActivityLog log1 = createLog(project);
         ActivityLog log2 = createLog(project);
         log2.setId(2L);
@@ -111,6 +128,8 @@ class ActivityLogServiceImplTest {
 
         PageRequest pageable = PageRequest.of(0, 10);
 
+        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        when(authService.getCurrentUser()).thenReturn(owner);
         when(activityLogRepository.findByProjectIdOrderByCreatedAtDesc(10L, pageable))
                 .thenReturn(new PageImpl<>(List.of(log2, log1)));
 
@@ -122,6 +141,55 @@ class ActivityLogServiceImplTest {
                 () -> assertEquals("Task status updated to DOING", result.getContent().get(1).getContent())
         );
 
+        verify(projectRepository).findById(10L);
+        verify(authService).getCurrentUser();
         verify(activityLogRepository).findByProjectIdOrderByCreatedAtDesc(10L, pageable);
+    }
+
+    @Test
+    @DisplayName("getLogsByProject: admin views any project's logs → returns paginated logs")
+    void getLogsByProject_admin_success() {
+        User owner = createOwner();
+        User admin = createAdmin();
+        Project project = createProject(owner);
+        ActivityLog log = createLog(project);
+
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        when(authService.getCurrentUser()).thenReturn(admin);
+        when(activityLogRepository.findByProjectIdOrderByCreatedAtDesc(10L, pageable))
+                .thenReturn(new PageImpl<>(List.of(log)));
+
+        Page<ActivityLogResponse> result = activityLogService.getLogsByProject(10L, pageable);
+
+        assertEquals(1, result.getTotalElements());
+
+        verify(projectRepository).findById(10L);
+        verify(authService).getCurrentUser();
+        verify(activityLogRepository).findByProjectIdOrderByCreatedAtDesc(10L, pageable);
+    }
+
+    @Test
+    @DisplayName("getLogsByProject: non-owner non-admin views logs → throws AccessDeniedException")
+    void getLogsByProject_fail_notOwner() {
+        User owner = createOwner();
+        User otherUser = new User();
+        otherUser.setId(3L);
+        otherUser.setUsername("other");
+        otherUser.setRole(Role.ROLE_USER);
+        Project project = createProject(owner);
+
+        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        when(authService.getCurrentUser()).thenReturn(otherUser);
+
+        AccessDeniedException exception = assertThrows(AccessDeniedException.class,
+                () -> activityLogService.getLogsByProject(10L, PageRequest.of(0, 10)));
+
+        assertEquals("You are not the owner of this project", exception.getMessage());
+
+        verify(projectRepository).findById(10L);
+        verify(authService).getCurrentUser();
+        verifyNoInteractions(activityLogRepository);
     }
 }

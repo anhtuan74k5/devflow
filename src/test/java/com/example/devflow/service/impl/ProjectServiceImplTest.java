@@ -128,4 +128,58 @@ class ProjectServiceImplTest {
         verifyNoInteractions(authService);
         verify(projectRepository, never()).delete(any(Project.class));
     }
+
+    @Test
+    @DisplayName("updateProject: admin can update any project → returns ProjectResponse")
+    void updateProject_admin_success() {
+        User owner = createCurrentUser();
+        User admin = new User();
+        admin.setId(99L);
+        admin.setUsername("admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        Project project = createProject(1L, "Original Project", owner);
+
+        CreateProjectRequest request = CreateProjectRequest.builder()
+                .name("Admin Updated")
+                .description("Admin Updated Description")
+                .build();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(authService.getCurrentUser()).thenReturn(admin);
+
+        Project updatedProject = createProject(1L, "Admin Updated", owner);
+        updatedProject.setDescription("Admin Updated Description");
+        when(projectRepository.save(any(Project.class))).thenReturn(updatedProject);
+
+        ProjectResponse response = projectService.updateProject(1L, request);
+
+        assertAll("admin update",
+                () -> assertEquals("Admin Updated", response.getName()),
+                () -> assertEquals("Admin Updated Description", response.getDescription())
+        );
+
+        verify(projectRepository).findById(1L);
+        verify(authService).getCurrentUser();
+        verify(projectRepository).save(any(Project.class));
+    }
+
+    @Test
+    @DisplayName("deleteProject: admin can delete any project → success")
+    void deleteProject_admin_success() {
+        User owner = createCurrentUser();
+        User admin = new User();
+        admin.setId(99L);
+        admin.setUsername("admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        Project project = createProject(1L, "Original Project", owner);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(authService.getCurrentUser()).thenReturn(admin);
+
+        projectService.deleteProject(1L);
+
+        verify(projectRepository).findById(1L);
+        verify(authService).getCurrentUser();
+        verify(projectRepository).delete(project);
+    }
 }

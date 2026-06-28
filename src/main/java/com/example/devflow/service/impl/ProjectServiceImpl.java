@@ -6,6 +6,7 @@ import com.example.devflow.entity.Project;
 import com.example.devflow.entity.User;
 import com.example.devflow.exception.AccessDeniedException;
 import com.example.devflow.exception.ResourceNotFoundException;
+import com.example.devflow.model.Role;
 import com.example.devflow.repository.ProjectRepository;
 import com.example.devflow.service.AuthService;
 import com.example.devflow.service.ProjectService;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
  * Implementation of ProjectService.
  * <p>
  * Enforces owner-based access control: only the project owner can update or delete.
+ * ADMIN users bypass the owner check and can manage any project.
  * Uses AuthService.getCurrentUser() to identify the authenticated user,
  * keeping SecurityContext access centralized in one place.
  */
@@ -80,8 +82,15 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", id));
     }
 
+    /**
+     * Checks if the current user is allowed to modify the project.
+     * Owner is always allowed. ADMIN users bypass the owner check.
+     */
     private void checkProjectAccess(Project project) {
         User currentUser = authService.getCurrentUser();
+        if (currentUser.getRole() == Role.ROLE_ADMIN) {
+            return;
+        }
         if (!project.getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You are not the owner of this project");
         }

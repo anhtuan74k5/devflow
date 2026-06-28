@@ -458,4 +458,93 @@ class TaskServiceImplTest {
         verify(taskRepository).findByIdAndProjectId(999L, 10L);
         verify(taskRepository, never()).delete(any(Task.class));
     }
+
+    @Test
+    @DisplayName("createTask: admin can create task in any project → returns TaskResponse")
+    void createTask_admin_success() {
+        User owner = createOwner();
+        User admin = new User();
+        admin.setId(99L);
+        admin.setUsername("admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        Project project = createProject(owner);
+        CreateTaskRequest request = CreateTaskRequest.builder()
+                .title("Admin Task")
+                .description("Admin created")
+                .build();
+
+        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        when(authService.getCurrentUser()).thenReturn(admin);
+
+        Task savedTask = createTask(project, null);
+        savedTask.setTitle("Admin Task");
+        savedTask.setDescription("Admin created");
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+
+        TaskResponse response = taskService.createTask(10L, request);
+
+        assertAll("admin task",
+                () -> assertEquals("Admin Task", response.getTitle()),
+                () -> assertEquals("Admin created", response.getDescription())
+        );
+
+        verify(projectRepository).findById(10L);
+        verify(authService).getCurrentUser();
+        verify(taskRepository).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("updateTaskStatus: admin can update status of any task → returns TaskResponse")
+    void updateTaskStatus_admin_success() {
+        User owner = createOwner();
+        User admin = new User();
+        admin.setId(99L);
+        admin.setUsername("admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        Project project = createProject(owner);
+        Task task = createTask(project, null);
+        task.setStatus(TaskStatus.TODO);
+
+        UpdateTaskStatusRequest request = UpdateTaskStatusRequest.builder()
+                .status(TaskStatus.DONE)
+                .build();
+
+        when(taskRepository.findByIdAndProjectId(100L, 10L)).thenReturn(Optional.of(task));
+        when(authService.getCurrentUser()).thenReturn(admin);
+
+        Task updatedTask = createTask(project, null);
+        updatedTask.setStatus(TaskStatus.DONE);
+        when(taskRepository.save(any(Task.class))).thenReturn(updatedTask);
+
+        TaskResponse response = taskService.updateTaskStatus(10L, 100L, request);
+
+        assertEquals(TaskStatus.DONE, response.getStatus());
+
+        verify(taskRepository).findByIdAndProjectId(100L, 10L);
+        verify(authService).getCurrentUser();
+        verify(taskRepository).save(any(Task.class));
+    }
+
+    @Test
+    @DisplayName("deleteTask: admin can delete task in any project → success")
+    void deleteTask_admin_success() {
+        User owner = createOwner();
+        User admin = new User();
+        admin.setId(99L);
+        admin.setUsername("admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        Project project = createProject(owner);
+        Task task = createTask(project, null);
+
+        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        when(authService.getCurrentUser()).thenReturn(admin);
+        when(taskRepository.findByIdAndProjectId(100L, 10L)).thenReturn(Optional.of(task));
+
+        taskService.deleteTask(10L, 100L);
+
+        verify(projectRepository).findById(10L);
+        verify(authService).getCurrentUser();
+        verify(taskRepository).findByIdAndProjectId(100L, 10L);
+        verify(taskRepository).delete(task);
+    }
 }
