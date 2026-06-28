@@ -65,10 +65,12 @@ class AuthServiceImplTest {
 
         AuthResponse response = authService.register(request);
 
-        assertNotNull(response);
-        assertEquals("jwt-token-123", response.getToken());
-        assertEquals("newuser", response.getUsername());
-        assertEquals("ROLE_USER", response.getRole());
+        assertAll("auth service",
+                () -> assertNotNull(response),
+                () -> assertEquals("jwt-token-123", response.getToken()),
+                () -> assertEquals("newuser", response.getUsername()),
+                () -> assertEquals("ROLE_USER", response.getRole())
+        );
 
         verify(userRepository).existsByUsername("newuser");
         verify(passwordEncoder).encode("password123");
@@ -119,10 +121,12 @@ class AuthServiceImplTest {
 
         AuthResponse response = authService.login(request);
 
-        assertNotNull(response);
-        assertEquals("jwt-token-456", response.getToken());
-        assertEquals("validuser", response.getUsername());
-        assertEquals("ROLE_USER", response.getRole());
+        assertAll("login response",
+                () -> assertNotNull(response),
+                () -> assertEquals("jwt-token-456", response.getToken()),
+                () -> assertEquals("validuser", response.getUsername()),
+                () -> assertEquals("ROLE_USER", response.getRole())
+        );
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(jwtUtil).generateToken("validuser");
