@@ -2,6 +2,7 @@ package com.example.devflow.service.impl;
 
 import com.example.devflow.config.JwtUtil;
 import com.example.devflow.dto.request.LoginRequest;
+import com.example.devflow.dto.request.RefreshTokenRequest;
 import com.example.devflow.dto.request.RegisterRequest;
 import com.example.devflow.dto.response.AuthResponse;
 import com.example.devflow.entity.User;
@@ -21,6 +22,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,7 +48,7 @@ class AuthServiceImplTest {
     private AuthServiceImpl authService;
 
     @Test
-    @DisplayName("register: username not taken → returns AuthResponse with token")
+    @DisplayName("register: username not taken → returns AuthResponse with access + refresh tokens")
     void register_success() {
         RegisterRequest request = RegisterRequest.builder()
                 .username("newuser")
@@ -54,7 +57,8 @@ class AuthServiceImplTest {
 
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(jwtUtil.generateToken("newuser")).thenReturn("jwt-token-123");
+        when(jwtUtil.generateAccessToken("newuser")).thenReturn("access-token-123");
+        when(jwtUtil.generateRefreshToken("newuser")).thenReturn("refresh-token-123");
 
         User savedUser = new User();
         savedUser.setId(1L);
@@ -67,7 +71,9 @@ class AuthServiceImplTest {
 
         assertAll("auth service",
                 () -> assertNotNull(response),
-                () -> assertEquals("jwt-token-123", response.getToken()),
+                () -> assertEquals("access-token-123", response.getToken()),
+                () -> assertEquals("access-token-123", response.getAccessToken()),
+                () -> assertEquals("refresh-token-123", response.getRefreshToken()),
                 () -> assertEquals("newuser", response.getUsername()),
                 () -> assertEquals("ROLE_USER", response.getRole())
         );
@@ -75,7 +81,8 @@ class AuthServiceImplTest {
         verify(userRepository).existsByUsername("newuser");
         verify(passwordEncoder).encode("password123");
         verify(userRepository).save(any(User.class));
-        verify(jwtUtil).generateToken("newuser");
+        verify(jwtUtil).generateAccessToken("newuser");
+        verify(jwtUtil).generateRefreshToken("newuser");
     }
 
     @Test
@@ -99,7 +106,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("login: correct credentials → returns AuthResponse with token")
+    @DisplayName("login: correct credentials → returns AuthResponse with access + refresh tokens")
     void login_success() {
         LoginRequest request = LoginRequest.builder()
                 .username("validuser")
@@ -117,19 +124,23 @@ class AuthServiceImplTest {
         when(authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken("validuser", "correctPassword")))
                 .thenReturn(authentication);
-        when(jwtUtil.generateToken("validuser")).thenReturn("jwt-token-456");
+        when(jwtUtil.generateAccessToken("validuser")).thenReturn("access-token-456");
+        when(jwtUtil.generateRefreshToken("validuser")).thenReturn("refresh-token-456");
 
         AuthResponse response = authService.login(request);
 
         assertAll("login response",
                 () -> assertNotNull(response),
-                () -> assertEquals("jwt-token-456", response.getToken()),
+                () -> assertEquals("access-token-456", response.getToken()),
+                () -> assertEquals("access-token-456", response.getAccessToken()),
+                () -> assertEquals("refresh-token-456", response.getRefreshToken()),
                 () -> assertEquals("validuser", response.getUsername()),
                 () -> assertEquals("ROLE_USER", response.getRole())
         );
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtUtil).generateToken("validuser");
+        verify(jwtUtil).generateAccessToken("validuser");
+        verify(jwtUtil).generateRefreshToken("validuser");
     }
 
     @Test
@@ -151,6 +162,82 @@ class AuthServiceImplTest {
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verifyNoInteractions(jwtUtil);
+    }
+
+    @Test
+    @DisplayName("refresh: valid refresh token → returns new access + refresh tokens")
+    void refresh_success() {
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("valid-refresh-token")
+                .build();
+
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("validuser");
+        user.setPassword("encodedPassword");
+        user.setRole(Role.ROLE_USER);
+
+        when(jwtUtil.getUsernameFromToken("valid-refresh-token")).thenReturn("validuser");
+        when(jwtUtil.validateToken("valid-refresh-token")).thenReturn(true);
+        when(userRepository.findByUsername("validuser")).thenReturn(Optional.of(user));
+        when(jwtUtil.generateAccessToken("validuser")).thenReturn("new-access-token");
+        when(jwtUtil.generateRefreshToken("validuser")).thenReturn("new-refresh-token");
+
+        AuthResponse response = authService.refresh(request);
+
+        assertAll("refresh response",
+                () -> assertNotNull(response),
+                () -> assertEquals("new-access-token", response.getToken()),
+                () -> assertEquals("new-access-token", response.getAccessToken()),
+                () -> assertEquals("new-refresh-token", response.getRefreshToken()),
+                () -> assertEquals("validuser", response.getUsername()),
+                () -> assertEquals("ROLE_USER", response.getRole())
+        );
+
+        verify(jwtUtil).getUsernameFromToken("valid-refresh-token");
+        verify(jwtUtil).validateToken("valid-refresh-token");
+        verify(userRepository).findByUsername("validuser");
+        verify(jwtUtil).generateAccessToken("validuser");
+        verify(jwtUtil).generateRefreshToken("validuser");
+    }
+
+    @Test
+    @DisplayName("refresh: expired refresh token → throws BusinessException")
+    void refresh_fail_expiredToken() {
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("expired-refresh-token")
+                .build();
+
+        when(jwtUtil.getUsernameFromToken("expired-refresh-token")).thenReturn("validuser");
+        when(jwtUtil.validateToken("expired-refresh-token")).thenReturn(false);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> authService.refresh(request));
+
+        assertEquals("Invalid or expired refresh token", exception.getMessage());
+
+        verify(jwtUtil).getUsernameFromToken("expired-refresh-token");
+        verify(jwtUtil).validateToken("expired-refresh-token");
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    @DisplayName("refresh: invalid refresh token (null username) → throws BusinessException")
+    void refresh_fail_invalidToken() {
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("invalid-refresh-token")
+                .build();
+
+        when(jwtUtil.getUsernameFromToken("invalid-refresh-token")).thenReturn(null);
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> authService.refresh(request));
+
+        assertEquals("Invalid or expired refresh token", exception.getMessage());
+
+        verify(jwtUtil).getUsernameFromToken("invalid-refresh-token");
+        verify(jwtUtil, never()).validateToken(any());
+        verifyNoInteractions(userRepository);
     }
 
     @ParameterizedTest(name = "register: invalid input \"{0}\" / \"{1}\" → throws BusinessException")

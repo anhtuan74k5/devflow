@@ -2,6 +2,7 @@ package com.example.devflow.controller;
 
 import com.example.devflow.config.TestSecurityConfig;
 import com.example.devflow.dto.request.LoginRequest;
+import com.example.devflow.dto.request.RefreshTokenRequest;
 import com.example.devflow.dto.request.RegisterRequest;
 import com.example.devflow.dto.response.AuthResponse;
 import com.example.devflow.exception.BusinessException;
@@ -36,7 +37,7 @@ class AuthControllerTest {
     private AuthService authService;
 
     @Test
-    @DisplayName("POST /api/auth/register: valid request → 201 with token")
+    @DisplayName("POST /api/auth/register: valid request → 201 with access + refresh tokens")
     void register_success() throws Exception {
         RegisterRequest request = RegisterRequest.builder()
                 .username("newuser")
@@ -44,7 +45,9 @@ class AuthControllerTest {
                 .build();
 
         AuthResponse authResponse = AuthResponse.builder()
-                .token("jwt-token")
+                .token("access-token")
+                .accessToken("access-token")
+                .refreshToken("refresh-token")
                 .username("newuser")
                 .role("ROLE_USER")
                 .build();
@@ -57,7 +60,9 @@ class AuthControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("User registered successfully"))
-                .andExpect(jsonPath("$.data.token").value("jwt-token"))
+                .andExpect(jsonPath("$.data.token").value("access-token"))
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"))
                 .andExpect(jsonPath("$.data.username").value("newuser"));
     }
 
@@ -96,7 +101,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/login: valid credentials → 200 with token")
+    @DisplayName("POST /api/auth/login: valid credentials → 200 with access + refresh tokens")
     void login_success() throws Exception {
         LoginRequest request = LoginRequest.builder()
                 .username("validuser")
@@ -104,7 +109,9 @@ class AuthControllerTest {
                 .build();
 
         AuthResponse authResponse = AuthResponse.builder()
-                .token("jwt-token")
+                .token("access-token")
+                .accessToken("access-token")
+                .refreshToken("refresh-token")
                 .username("validuser")
                 .role("ROLE_USER")
                 .build();
@@ -117,7 +124,9 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Login successful"))
-                .andExpect(jsonPath("$.data.token").value("jwt-token"));
+                .andExpect(jsonPath("$.data.token").value("access-token"))
+                .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"));
     }
 
     @Test
@@ -137,5 +146,64 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid username or password"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh: valid refresh token → 200 with new tokens")
+    void refresh_success() throws Exception {
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("valid-refresh-token")
+                .build();
+
+        AuthResponse authResponse = AuthResponse.builder()
+                .token("new-access-token")
+                .accessToken("new-access-token")
+                .refreshToken("new-refresh-token")
+                .username("validuser")
+                .role("ROLE_USER")
+                .build();
+
+        when(authService.refresh(any(RefreshTokenRequest.class))).thenReturn(authResponse);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Token refreshed successfully"))
+                .andExpect(jsonPath("$.data.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("new-refresh-token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh: expired refresh token → 400")
+    void refresh_fail_expired() throws Exception {
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("expired-refresh-token")
+                .build();
+
+        when(authService.refresh(any(RefreshTokenRequest.class)))
+                .thenThrow(new BusinessException("Invalid or expired refresh token"));
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid or expired refresh token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh: blank refresh token → 400 validation error")
+    void refresh_fail_validation() throws Exception {
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("")
+                .build();
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }

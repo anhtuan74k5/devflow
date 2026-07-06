@@ -3,6 +3,7 @@ package com.example.devflow;
 import com.example.devflow.dto.request.CreateProjectRequest;
 import com.example.devflow.dto.request.CreateTaskRequest;
 import com.example.devflow.dto.request.LoginRequest;
+import com.example.devflow.dto.request.RefreshTokenRequest;
 import com.example.devflow.dto.request.RegisterRequest;
 import com.example.devflow.dto.request.UpdateTaskStatusRequest;
 import com.example.devflow.dto.response.ApiResponse;
@@ -41,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * Uses Testcontainers to spin up a real PostgreSQL 15 instance, ensuring
  * the test environment matches production. Tests cover the complete flow:
- * register → login → create project → create task → update status →
+ * register → login → refresh → create project → create task → update status →
  * verify activity log is created automatically by AOP.
  * <p>
  * Uses TestRestTemplate for real HTTP calls (not mock MVC), which exercises
@@ -213,6 +214,8 @@ class DevflowIntegrationTest {
             assertThat(registerResp.getBody()).isNotNull();
             assertThat(registerResp.getBody().isSuccess()).isTrue();
             assertThat(registerResp.getBody().getData().getToken()).isNotBlank();
+            assertThat(registerResp.getBody().getData().getAccessToken()).isNotBlank();
+            assertThat(registerResp.getBody().getData().getRefreshToken()).isNotBlank();
             assertThat(registerResp.getBody().getData().getUsername()).isEqualTo("authuser");
 
             ResponseEntity<ApiResponse<AuthResponse>> loginResp = postAuth(
@@ -223,6 +226,8 @@ class DevflowIntegrationTest {
             assertThat(loginResp.getBody()).isNotNull();
             assertThat(loginResp.getBody().isSuccess()).isTrue();
             assertThat(loginResp.getBody().getData().getToken()).isNotBlank();
+            assertThat(loginResp.getBody().getData().getAccessToken()).isNotBlank();
+            assertThat(loginResp.getBody().getData().getRefreshToken()).isNotBlank();
 
             String token = loginResp.getBody().getData().getToken();
             ResponseEntity<ApiResponse<Map<String, Object>>> projectsResp = getPage(
@@ -283,6 +288,48 @@ class DevflowIntegrationTest {
                     new HttpEntity<>(headers),
                     new ParameterizedTypeReference<ApiResponse<Void>>() {});
             assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        }
+
+        @Test
+        @DisplayName("Refresh token flow: login → refresh → use new token")
+        void refreshTokenFlow() {
+            // Register + login
+            ResponseEntity<ApiResponse<AuthResponse>> loginResp = postAuth(
+                    "/api/auth/register",
+                    RegisterRequest.builder().username("refreshuser").password("password123").build());
+            assertThat(loginResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+            String refreshToken = loginResp.getBody().getData().getRefreshToken();
+            assertThat(refreshToken).isNotBlank();
+
+            // Use refresh token to get new access token
+            ResponseEntity<ApiResponse<AuthResponse>> refreshResp = postAuth(
+                    "/api/auth/refresh",
+                    RefreshTokenRequest.builder().refreshToken(refreshToken).build());
+
+            assertThat(refreshResp.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(refreshResp.getBody()).isNotNull();
+            assertThat(refreshResp.getBody().isSuccess()).isTrue();
+            assertThat(refreshResp.getBody().getData().getAccessToken()).isNotBlank();
+            assertThat(refreshResp.getBody().getData().getRefreshToken()).isNotBlank();
+
+            // New access token should work for API calls
+            String newAccessToken = refreshResp.getBody().getData().getAccessToken();
+            ResponseEntity<ApiResponse<Map<String, Object>>> projectsResp = getPage(
+                    "/api/projects?page=0&size=10", newAccessToken);
+            assertThat(projectsResp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        }
+
+        @Test
+        @DisplayName("Refresh with invalid token → 400")
+        void refreshInvalidToken() {
+            ResponseEntity<ApiResponse<AuthResponse>> refreshResp = postAuth(
+                    "/api/auth/refresh",
+                    RefreshTokenRequest.builder().refreshToken("invalid-token").build());
+
+            assertThat(refreshResp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(refreshResp.getBody()).isNotNull();
+            assertThat(refreshResp.getBody().isSuccess()).isFalse();
         }
     }
 

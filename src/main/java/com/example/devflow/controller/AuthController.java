@@ -1,6 +1,7 @@
 package com.example.devflow.controller;
 
 import com.example.devflow.dto.request.LoginRequest;
+import com.example.devflow.dto.request.RefreshTokenRequest;
 import com.example.devflow.dto.request.RegisterRequest;
 import com.example.devflow.dto.response.ApiResponse;
 import com.example.devflow.dto.response.AuthResponse;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Register and login endpoints")
+@Tag(name = "Authentication", description = "Register, login, and token refresh endpoints")
 public class AuthController {
 
     private final AuthService authService;
@@ -34,7 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new user", description = "Creates a new user account and returns a JWT token")
+    @Operation(summary = "Register a new user", description = "Creates a new user account and returns access + refresh tokens")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "User registered successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error or username already exists")
@@ -46,7 +47,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Authenticate a user", description = "Validates credentials and returns a JWT token")
+    @Operation(summary = "Authenticate a user", description = "Validates credentials and returns access + refresh tokens")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials")
@@ -54,5 +55,16 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Refresh access token", description = "Exchanges a valid refresh token for a new access token + new refresh token (rotation)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid or expired refresh token")
+    })
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        AuthResponse response = authService.refresh(request);
+        return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", response));
     }
 }

@@ -31,6 +31,6 @@ public class TestSecurityConfig {
 
     @Bean
     public JwtUtil jwtUtil() {
-        return new JwtUtil("dGVzdC1zZWNyZXQta2V5LWZvci1kZXZmbG93LWFwcGxpY2F0aW9uLXRlc3Rpbmc=", 86400000L);
+        return new JwtUtil("dGVzdC1zZWNyZXQta2V5LWZvci1kZXZmbG93LWFwcGxpY2F0aW9uLXRlc3Rpbmc=", 86400000L, 604800000L);
     }
 }
