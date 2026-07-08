@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="frontend/favicon.png" alt="DevFlow Logo" width="120" height="120" style="border-radius: 24px;">
   <h1>🚀 DevFlow</h1>
   <p><strong>Enterprise Task & Activity Tracking System</strong></p>
   <p>
@@ -12,43 +13,118 @@
     <img src="https://img.shields.io/badge/TypeScript-5.4-3178C6?style=flat-square&logo=typescript" alt="TypeScript 5.4">
     <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql" alt="PostgreSQL 15">
     <img src="https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker" alt="Docker">
+    <img src="https://img.shields.io/badge/Chakra%20UI-2.x-319795?style=flat-square&logo=chakraui" alt="Chakra UI">
+  </p>
+
+  <p>
+    <a href="#-overview">Overview</a> •
+    <a href="#-features">Features</a> •
+    <a href="#-tech-stack">Tech Stack</a> •
+    <a href="#-architecture">Architecture</a> •
+    <a href="#-quick-start">Quick Start</a> •
+    <a href="#-api-endpoints">API</a> •
+    <a href="#-testing">Testing</a>
   </p>
 </div>
 
 ---
 
-## 📋 Table of Contents
+## 📖 Overview
 
-- [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Features](#-features)
-- [Project Structure](#-project-structure)
-- [Database Schema (ERD)](#-database-schema-erd)
-- [API Endpoints](#-api-endpoints)
-- [Frontend Pages & Routes](#-frontend-pages--routes)
-- [Key Technical Highlights](#-key-technical-highlights)
-- [Quick Start with Docker](#-quick-start-with-docker)
-- [Manual Setup (Development)](#-manual-setup-development)
-- [Environment Variables](#-environment-variables)
-- [Testing](#-testing)
-- [API Usage Examples](#-api-usage-examples)
-- [Contributing](#-contributing)
-- [License](#-license)
+**DevFlow** is a modern, full-stack task management application designed for development teams. It combines a **Spring Boot 3 RESTful API** with a **React + TypeScript frontend** to deliver a seamless project management experience with rich activity tracking.
+
+### ✨ What Makes DevFlow Special?
+
+| Feature | Description |
+|---------|-------------|
+| **📊 Automatic Activity Feed** | Like a social media newsfeed for your projects. Every task status change is automatically logged via AOP, creating a rich audit trail without manual logging code. |
+| **🔐 JWT with Token Rotation** | Stateless authentication with short-lived access tokens (15 min) and rotating refresh tokens (7 days) for maximum security and scalability. |
+| **👥 Role-Based Access Control** | Two roles (`USER` and `ADMIN`) with granular permissions. Admins manage everything; users own their projects. |
+| **🔒 Optimistic Locking** | Tasks use JPA `@Version` for optimistic locking, preventing concurrent modification conflicts. |
+| **🐳 Dockerized from Day One** | One command to spin up the entire stack: PostgreSQL, Spring Boot backend, and React frontend behind Nginx. |
+| **🎨 Modern UI with Chakra UI** | Responsive design with dark sidebar layout, real-time status updates, and visual activity timeline. |
 
 ---
 
-## 📖 Overview
+## ✨ Features
 
-**DevFlow** is a modern, full-stack task management application designed for teams. It combines a **Spring Boot 3 RESTful API** with a **React + TypeScript frontend** to provide a seamless project management experience.
+### 🔐 Authentication & Authorization
+- User registration with BCrypt password hashing
+- JWT-based stateless authentication (access + refresh tokens)
+- Token rotation — old refresh tokens become invalid upon refresh
+- Role-based access control: `USER` and `ADMIN`
+- Automatic 401/403 error handling with consistent API responses
 
-### What makes DevFlow special?
+### 📁 Project Management
+- Full CRUD operations for projects
+- Owner-based access control (only owner or admin can modify)
+- Paginated project listing with search support
+- Admin can view and manage all projects
 
-- **Automatic Activity Feed** — Like a social media newsfeed for your projects. Every task status change is automatically logged via AOP (Aspect-Oriented Programming), creating a rich audit trail without any manual logging code.
-- **JWT with Token Rotation** — Stateless authentication with short-lived access tokens (15 min) and rotating refresh tokens (7 days) for security and scalability.
-- **Role-Based Access Control** — Two roles (`USER` and `ADMIN`) with granular permissions. Admins can manage any project; users own their projects.
-- **Optimistic Locking** — Tasks use JPA `@Version` for optimistic locking to prevent concurrent modification conflicts.
-- **Dockerized from Day One** — One command to spin up the entire stack: PostgreSQL, Spring Boot backend, and React frontend behind Nginx.
+### ✅ Task Management
+- Full CRUD operations within projects
+- Task status workflow: `TODO` → `IN_PROGRESS` → `DONE`
+- Priority levels: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`
+- Assign tasks to users with visual priority tags
+- Filter tasks by status
+- Optimistic locking with `@Version` for concurrent safety
+- Paginated task listing
+
+### 📊 Activity Feed
+- Automatic activity logging via AOP (AspectJ) — no manual logging code needed
+- Logs created on: task creation, task status changes
+- Per-project activity feed (paginated, newest first)
+- System-wide activity logs for admins
+- Visual timeline UI component with connectors
+
+### 🖥 Modern Frontend
+- Responsive sidebar layout with Chakra UI
+- Dashboard with project statistics (total, TODO, in-progress, done)
+- Real-time status updates via dropdown
+- Visual status badges and priority tags
+- Activity timeline with visual connectors
+- Admin panel for system-wide logs
+- Token refresh interceptor — seamless re-authentication
+- Framer Motion animations for smooth transitions
+
+---
+
+## 🛠 Tech Stack
+
+### Backend
+
+| Layer | Technology |
+|-------|-----------|
+| **Language** | Java 21 |
+| **Framework** | Spring Boot 3.5.14 |
+| **Security** | Spring Security 6, JWT (jjwt 0.12.6) |
+| **Database** | PostgreSQL 15, Spring Data JPA, Hibernate |
+| **API Documentation** | Swagger UI (springdoc-openapi 2.8.6) |
+| **Build Tool** | Maven (Wrapper included) |
+| **Testing** | JUnit 5, Testcontainers, Spring Security Test |
+| **Others** | Lombok, AOP (AspectJ), Bean Validation (Jakarta) |
+
+### Frontend
+
+| Layer | Technology |
+|-------|-----------|
+| **Language** | TypeScript 5.4 |
+| **UI Library** | React 18.3 |
+| **Build Tool** | Vite 5.3 |
+| **UI Components** | Chakra UI 2.8 |
+| **HTTP Client** | Axios (with interceptors for auth & refresh) |
+| **Routing** | React Router v6 |
+| **Notifications** | react-hot-toast |
+| **Animation** | Framer Motion 11 |
+
+### DevOps
+
+| Tool | Purpose |
+|------|---------|
+| **Docker** | Containerization |
+| **Docker Compose** | Multi-container orchestration |
+| **Nginx** | Reverse proxy & static file serving |
+| **Multi-stage Builds** | Optimized Docker images (~180MB backend) |
 
 ---
 
@@ -124,87 +200,6 @@ PostgreSQL
 
 ---
 
-## 🛠 Tech Stack
-
-### Backend
-
-| Layer | Technology |
-|-------|-----------|
-| **Language** | Java 21 |
-| **Framework** | Spring Boot 3.5.x |
-| **Security** | Spring Security 6, JWT (jjwt 0.12.x) |
-| **Database** | PostgreSQL 15, Spring Data JPA, Hibernate |
-| **API Documentation** | Swagger UI (springdoc-openapi 2.8.x) |
-| **Build Tool** | Maven (Wrapper included) |
-| **Testing** | JUnit 5, Testcontainers, Spring Security Test |
-| **Others** | Lombok, AOP (AspectJ), Bean Validation (Jakarta) |
-
-### Frontend
-
-| Layer | Technology |
-|-------|-----------|
-| **Language** | TypeScript 5.4 |
-| **UI Library** | React 18 |
-| **Build Tool** | Vite 5 |
-| **UI Components** | Chakra UI 2.x |
-| **HTTP Client** | Axios (with interceptors for auth & refresh) |
-| **Routing** | React Router v6 |
-| **Notifications** | react-hot-toast |
-| **Animation** | Framer Motion |
-
-### DevOps
-
-| Tool | Purpose |
-|------|---------|
-| **Docker** | Containerization |
-| **Docker Compose** | Multi-container orchestration |
-| **Nginx** | Reverse proxy & static file serving |
-| **Multi-stage Builds** | Optimized Docker images (~180MB backend) |
-
----
-
-## ✨ Features
-
-### 🔐 Authentication & Authorization
-- User registration with BCrypt password hashing
-- JWT-based stateless authentication (access + refresh tokens)
-- Token rotation for refresh tokens (old tokens become invalid)
-- Role-based access control: `USER` and `ADMIN`
-- Automatic 401/403 error handling
-
-### 📁 Project Management
-- Create, read, update, delete projects
-- Owner-based access control (only owner or admin can modify)
-- Paginated project listing
-- Admin can view and manage all projects
-
-### ✅ Task Management
-- Full CRUD operations within projects
-- Task status workflow: `TODO` → `IN_PROGRESS` → `DONE`
-- Priority levels: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`
-- Assign tasks to users
-- Filter tasks by status
-- Optimistic locking with `@Version` for concurrent safety
-- Paginated task listing
-
-### 📊 Activity Feed
-- Automatic activity logging via AOP (AspectJ)
-- Logs created on: task creation, task status changes
-- Per-project activity feed (paginated, newest first)
-- System-wide activity logs for admins
-- Visual timeline UI component
-
-### 🖥 Modern Frontend
-- Responsive sidebar layout with Chakra UI
-- Dashboard with project statistics (total, TODO, in-progress, done)
-- Real-time status updates via dropdown
-- Visual status badges and priority tags
-- Activity timeline with visual connectors
-- Admin panel for system-wide logs
-- Token refresh interceptor (seamless re-authentication)
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -236,64 +231,26 @@ devflow/
 │       │   │   │   └── AdminController.java      # /api/admin/**
 │       │   │   ├── dto/
 │       │   │   │   ├── request/                  # Request DTOs
-│       │   │   │   │   ├── RegisterRequest.java
-│       │   │   │   │   ├── LoginRequest.java
-│       │   │   │   │   ├── RefreshTokenRequest.java
-│       │   │   │   │   ├── CreateProjectRequest.java
-│       │   │   │   │   ├── CreateTaskRequest.java
-│       │   │   │   │   └── UpdateTaskStatusRequest.java
 │       │   │   │   └── response/                 # Response DTOs
-│       │   │   │       ├── ApiResponse.java      # Generic wrapper
-│       │   │   │       ├── AuthResponse.java
-│       │   │   │       ├── ProjectResponse.java
-│       │   │   │       ├── TaskResponse.java
-│       │   │   │       └── ActivityLogResponse.java
 │       │   │   ├── entity/
 │       │   │   │   ├── User.java                 # Implements UserDetails
 │       │   │   │   ├── Project.java
 │       │   │   │   ├── Task.java                 # With @Version lock
 │       │   │   │   └── ActivityLog.java
 │       │   │   ├── exception/
-│       │   │   │   ├── BusinessException.java
-│       │   │   │   ├── ResourceNotFoundException.java
-│       │   │   │   ├── AccessDeniedException.java
 │       │   │   │   └── GlobalExceptionHandler.java  # Centralized error handling
 │       │   │   ├── model/
 │       │   │   │   ├── Role.java                 # ROLE_USER, ROLE_ADMIN
 │       │   │   │   ├── TaskStatus.java           # TODO, IN_PROGRESS, DONE
 │       │   │   │   └── TaskPriority.java         # LOW, MEDIUM, HIGH, CRITICAL
 │       │   │   ├── repository/                   # Spring Data JPA
-│       │   │   │   ├── UserRepository.java
-│       │   │   │   ├── ProjectRepository.java
-│       │   │   │   ├── TaskRepository.java
-│       │   │   │   └── ActivityLogRepository.java
 │       │   │   ├── service/
-│       │   │   │   ├── AuthService.java
-│       │   │   │   ├── ProjectService.java
-│       │   │   │   ├── TaskService.java
-│       │   │   │   ├── ActivityLogService.java
 │       │   │   │   └── impl/                     # Implementations
 │       │   │   └── aspect/
 │       │   │       └── LoggingAspect.java        # AOP auto-logging
 │       │   └── resources/
 │       │       └── application.yaml              # Config with env vars
 │       └── test/                                 # Unit & integration tests
-│           ├── java/com/example/devflow/
-│           │   ├── DevflowApplicationTests.java
-│           │   ├── DevflowIntegrationTest.java
-│           │   ├── config/TestSecurityConfig.java
-│           │   ├── controller/
-│           │   │   ├── AuthControllerTest.java
-│           │   │   ├── ProjectControllerTest.java
-│           │   │   ├── TaskControllerTest.java
-│           │   │   └── ActivityControllerTest.java
-│           │   └── service/impl/
-│           │       ├── AuthServiceImplTest.java
-│           │       ├── ProjectServiceImplTest.java
-│           │       ├── TaskServiceImplTest.java
-│           │       └── ActivityLogServiceImplTest.java
-│           └── resources/
-│               └── application-integration.yaml
 │
 └── frontend/                       # React + TypeScript Application
     ├── Dockerfile                  # Multi-stage build (Node → Nginx)
@@ -437,7 +394,7 @@ http://localhost:8080/swagger-ui.html
 |-------|------|-------------|
 | `/login` | LoginPage | User sign-in |
 | `/register` | RegisterPage | User registration |
-| `/` | DashboardPage | Overview with project stats |
+| `/` | DashboardPage | Overview with project statistics |
 | `/projects` | ProjectListPage | Paginated project list |
 | `/projects/new` | CreateProjectPage | Create a new project |
 | `/projects/:id` | ProjectDetailPage | Project details + tasks |
@@ -497,9 +454,13 @@ http://localhost:8080/swagger-ui.html
 
 ---
 
-## 🚀 Quick Start with Docker
+## 🚀 Quick Start
 
-**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
+### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Run with Docker (Recommended)
 
 ```bash
 # 1. Clone the repository
@@ -526,17 +487,15 @@ docker compose down
 docker compose down -v
 ```
 
----
+### Manual Setup (Development)
 
-## 🔧 Manual Setup (Development)
-
-### Prerequisites
+#### Prerequisites
 - Java 21+
 - Node.js 20+
 - PostgreSQL 15+
 - Maven (or use `./mvnw` wrapper)
 
-### Backend Setup
+#### Backend Setup
 
 ```bash
 cd backend
@@ -549,7 +508,7 @@ cp .env.example .env
 ./mvnw spring-boot:run
 ```
 
-### Frontend Setup
+#### Frontend Setup
 
 ```bash
 cd frontend
