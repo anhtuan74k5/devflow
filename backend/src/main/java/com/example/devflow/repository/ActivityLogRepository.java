@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
 
     Page<ActivityLog> findByProjectIdOrderByCreatedAtDesc(Long projectId, Pageable pageable);
+
+    Page<ActivityLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

@@ -35,7 +35,13 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Page<ProjectResponse> getAllProjects(Pageable pageable) {
-        return projectRepository.findAll(pageable)
+        User currentUser = authService.getCurrentUser();
+        // ADMIN sees all projects; regular users see only projects they own or are assigned to
+        if (currentUser.getRole() == Role.ROLE_ADMIN) {
+            return projectRepository.findAll(pageable)
+                    .map(this::toProjectResponse);
+        }
+        return projectRepository.findAccessibleProjects(currentUser.getId(), pageable)
                 .map(this::toProjectResponse);
     }
 

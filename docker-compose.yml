@@ -12,14 +12,20 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - devflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME-postgres} -d ${DB_NAME-devflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
-    container_name: devflow-app
+    container_name: devflow-backend
     ports:
       - "8080:8080"
     depends_on:
-      - postgres-db
+      postgres-db:
+        condition: service_healthy
     environment:
       DB_HOST: postgres-db
       DB_PORT: 5432
@@ -28,6 +34,17 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-123}
       JWT_SECRET: ${JWT_SECRET:-devflow-secret-key-must-be-at-least-256-bits-long-for-hs256}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+    restart: on-failure
+    networks:
+      - devflow-network
+
+  frontend:
+    build: ./frontend
+    container_name: devflow-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
     restart: on-failure
     networks:
       - devflow-network

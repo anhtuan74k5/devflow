@@ -30,4 +30,14 @@ public interface ActivityLogService {
      * @return a page of activity log responses
      */
     Page<ActivityLogResponse> getLogsByProject(Long projectId, Pageable pageable);
+
+    /**
+     * Retrieves ALL activity logs across the entire system, sorted by creation time descending.
+     * <p>
+     * This is an admin-only operation. Regular users must use getLogsByProject() instead.
+     *
+     * @param pageable pagination parameters
+     * @return a page of activity log responses
+     */
+    Page<ActivityLogResponse> getAllLogs(Pageable pageable);
 }

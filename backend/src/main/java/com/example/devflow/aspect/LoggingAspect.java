@@ -33,30 +33,41 @@ public class LoggingAspect {
 
     /**
      * Pointcut targeting TaskService.updateTaskStatus().
-     * <p>
-     * Matches any method named "updateTaskStatus" in the TaskService interface
-     * regardless of parameters. The method name is the contract — do not rename it
-     * without updating this pointcut.
      */
     @Pointcut("execution(* com.example.devflow.service.TaskService.updateTaskStatus(..))")
     public void taskStatusUpdatePointcut() {
     }
 
     /**
+     * Pointcut targeting TaskService.createTask().
+     */
+    @Pointcut("execution(* com.example.devflow.service.TaskService.createTask(..))")
+    public void taskCreatePointcut() {
+    }
+
+    /**
      * After returning advice that logs task status changes.
-     * <p>
-     * Extracts the project ID and task title from the returned TaskResponse
-     * and creates an activity log entry. The log content is a human-readable
-     * string describing what changed.
-     *
-     * @param joinPoint the join point providing method arguments
-     * @param result    the TaskResponse returned by the target method
      */
     @AfterReturning(pointcut = "taskStatusUpdatePointcut()", returning = "result")
     public void logTaskStatusChange(JoinPoint joinPoint, Object result) {
         if (result instanceof TaskResponse taskResponse) {
             String content = String.format(
                     "Task '%s' status updated to %s",
+                    taskResponse.getTitle(),
+                    taskResponse.getStatus()
+            );
+            activityLogService.createLog(content, taskResponse.getProjectId());
+        }
+    }
+
+    /**
+     * After returning advice that logs task creation.
+     */
+    @AfterReturning(pointcut = "taskCreatePointcut()", returning = "result")
+    public void logTaskCreation(JoinPoint joinPoint, Object result) {
+        if (result instanceof TaskResponse taskResponse) {
+            String content = String.format(
+                    "Task '%s' created with status %s",
                     taskResponse.getTitle(),
                     taskResponse.getStatus()
             );

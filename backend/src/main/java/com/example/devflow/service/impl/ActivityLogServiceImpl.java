@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 /**
  * Implementation of ActivityLogService.
@@ -49,7 +50,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
         ActivityLog log = new ActivityLog();
         log.setContent(content);
-        log.setCreatedAt(LocalDateTime.now());
+        log.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
         log.setProject(project);
 
         ActivityLog saved = activityLogRepository.save(log);
@@ -63,6 +64,12 @@ public class ActivityLogServiceImpl implements ActivityLogService {
         checkProjectAccess(project);
 
         return activityLogRepository.findByProjectIdOrderByCreatedAtDesc(projectId, pageable)
+                .map(this::toResponse);
+    }
+
+    @Override
+    public Page<ActivityLogResponse> getAllLogs(Pageable pageable) {
+        return activityLogRepository.findAllByOrderByCreatedAtDesc(pageable)
                 .map(this::toResponse);
     }
 
