@@ -13,8 +13,8 @@ services:
     networks:
       - devflow-network
 
-  app:
-    build: .
+  backend:
+    build: ./backend
     container_name: devflow-app
     ports:
       - "8080:8080"
