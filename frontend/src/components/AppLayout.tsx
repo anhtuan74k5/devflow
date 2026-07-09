@@ -35,7 +35,7 @@ export default function AppLayout() {
   };
 
   const navItems = [
-    { label: 'Dashboard', path: '/' },
+    { label: 'Dashboard', path: '/dashboard' },
     { label: 'Projects', path: '/projects' },
   ];
 
