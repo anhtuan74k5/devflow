@@ -22,8 +22,8 @@ function AppContent() {
   const location = useLocation();
   const { user } = useAuth();
   const [showIntro, setShowIntro] = useState(() => {
-    // Only show intro on the home page, and only once per session
-    return location.pathname === '/' && !sessionStorage.getItem('introShown');
+    // Only show intro on the home page for unauthenticated users, and only once per session
+    return !user && location.pathname === '/' && !sessionStorage.getItem('introShown');
   });
 
   const handleIntroComplete = () => {

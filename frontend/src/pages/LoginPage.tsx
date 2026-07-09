@@ -27,7 +27,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await login({ username, password });
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'response' in err
@@ -42,6 +42,11 @@ export default function LoginPage() {
   return (
     <Container maxW="sm" py={20}>
       <Stack spacing={6}>
+        <Box textAlign="center">
+          <Link as={RouterLink} to="/" color="blue.500" fontSize="sm">
+            &larr; Back to Home
+          </Link>
+        </Box>
         <Heading textAlign="center">Sign in to DevFlow</Heading>
         <Box as="form" onSubmit={handleSubmit} borderWidth={1} borderRadius="lg" p={6}>
           <Stack spacing={4}>
