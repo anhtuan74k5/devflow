@@ -57,7 +57,7 @@ export default function SystemLogsPage() {
   }
 
   return (
-    <Box>
+    <Box maxW="6xl" mx="auto">
       <Heading size="lg" mb={6}>
         System Activity Logs
       </Heading>

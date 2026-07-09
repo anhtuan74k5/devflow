@@ -80,7 +80,7 @@ export default function ProjectListPage() {
   }
 
   return (
-    <Box>
+    <Box maxW="6xl" mx="auto">
       <HStack justify="space-between" mb={6}>
         <Heading size="lg">Projects</Heading>
         <Button colorScheme="blue" onClick={() => navigate('/projects/new')}>

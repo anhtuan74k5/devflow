@@ -51,7 +51,7 @@ export default function ActivityFeedPage() {
 
   if (!projectId) {
     return (
-      <Box>
+      <Box maxW="4xl" mx="auto">
         <Heading size="lg" mb={6}>
           Activity feed
         </Heading>
@@ -61,7 +61,7 @@ export default function ActivityFeedPage() {
   }
 
   return (
-    <Box>
+    <Box maxW="4xl" mx="auto">
       <Link as={RouterLink} to={`/projects/${projectId}`} color="blue.500" fontSize="sm" mb={4} display="inline-block">
         ← Back to project
       </Link>

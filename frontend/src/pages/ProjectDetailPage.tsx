@@ -88,7 +88,7 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <Box maxW="lg">
+    <Box maxW="4xl" mx="auto">
       <HStack mb={4}>
         {user?.role === 'ADMIN' && (
           <Button
@@ -130,7 +130,10 @@ export default function ProjectDetailPage() {
       ) : (
         <Stack spacing={3}>
           <Text>
-            <strong>Description:</strong> {project.description || 'No description'}
+            <strong>Description:</strong>
+          </Text>
+          <Text whiteSpace="pre-wrap" pl={4}>
+            {project.description || 'No description'}
           </Text>
           <Text>
             <strong>Owner:</strong> {project.ownerUsername}
@@ -141,11 +144,13 @@ export default function ProjectDetailPage() {
 
       <Divider my={8} />
 
-      <HStack mb={4} spacing={4}>
-        <Link as={RouterLink} to={`/projects/${id}/activities`} color="blue.500" fontSize="sm">
-          View activity feed →
-        </Link>
-      </HStack>
+      {isOwnerOrAdmin(project.ownerId) && (
+        <HStack mb={4} spacing={4}>
+          <Link as={RouterLink} to={`/projects/${id}/activities`} color="blue.500" fontSize="sm">
+            View activity feed →
+          </Link>
+        </HStack>
+      )}
 
       <TaskListPage projectOwnerId={project.ownerId} />
     </Box>

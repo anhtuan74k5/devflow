@@ -104,7 +104,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <Box>
+    <Box maxW="6xl" mx="auto">
       <Heading size="lg" mb={6}>
         Dashboard
       </Heading>

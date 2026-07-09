@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -12,6 +13,12 @@ import {
   Text,
   VStack,
   Link,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
 } from '@chakra-ui/react';
 import { HamburgerIcon } from '@chakra-ui/icons';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +27,7 @@ export default function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -35,9 +43,14 @@ export default function AppLayout() {
     navItems.push({ label: 'System Logs', path: '/admin/logs' });
   }
 
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setIsDrawerOpen(false);
+  };
+
   return (
     <Flex h="100vh">
-      {/* Sidebar */}
+      {/* Sidebar for desktop */}
       <Box
         w="240px"
         bg="black"
@@ -66,6 +79,38 @@ export default function AppLayout() {
         </VStack>
       </Box>
 
+      {/* Mobile drawer */}
+      <Drawer
+        isOpen={isDrawerOpen}
+        placement="left"
+        onClose={() => setIsDrawerOpen(false)}
+      >
+        <DrawerOverlay />
+        <DrawerContent bg="black" color="white">
+          <DrawerCloseButton color="white" />
+          <DrawerHeader>DevFlow</DrawerHeader>
+          <DrawerBody>
+            <VStack align="stretch" spacing={1}>
+              {navItems.map((item) => (
+                <Link
+                  key={item.path}
+                  as={RouterLink}
+                  to={item.path}
+                  px={2}
+                  py={2}
+                  borderRadius="md"
+                  bg={location.pathname === item.path ? 'blue.600' : 'transparent'}
+                  _hover={{ bg: 'blue.500' }}
+                  onClick={() => handleNavClick(item.path)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </VStack>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+
       {/* Main area */}
       <Flex direction="column" flex={1} overflow="hidden">
         {/* Header */}
@@ -77,6 +122,7 @@ export default function AppLayout() {
                 icon={<HamburgerIcon />}
                 display={{ base: 'inline-flex', md: 'none' }}
                 variant="ghost"
+                onClick={() => setIsDrawerOpen(true)}
               />
             </HStack>
             <HStack spacing={4}>

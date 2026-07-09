@@ -22,7 +22,7 @@ export default function CreateProjectPage() {
   };
 
   return (
-    <Box maxW="lg">
+    <Box maxW="4xl" mx="auto">
       <Heading size="lg" mb={6}>
         Create project
       </Heading>

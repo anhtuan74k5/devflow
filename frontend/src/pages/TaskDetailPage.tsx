@@ -11,12 +11,14 @@ import {
   Stack,
   Select,
   Link,
+  Divider,
 } from '@chakra-ui/react';
 import toast from 'react-hot-toast';
 import client from '../api/client';
 import TaskForm from '../components/TaskForm';
 import StatusBadge from '../components/StatusBadge';
 import PriorityTag from '../components/PriorityTag';
+import TaskActivityEditor from '../components/TaskActivityEditor';
 import { useAuth } from '../context/AuthContext';
 import type { Task, CreateTaskRequest, ApiResponse } from '../types';
 
@@ -80,12 +82,12 @@ export default function TaskDetailPage() {
     const newStatus = e.target.value as Task['status'];
     setStatusUpdating(true);
     try {
-      const res = await client.patch<ApiResponse<Task>>(
+      await client.patch<ApiResponse<Task>>(
         `/projects/${projectId}/tasks/${taskId}/status`,
         { status: newStatus },
       );
-      setTask(res.data.data);
       toast.success(`Status changed to ${newStatus}`);
+      navigate(`/projects/${projectId}`);
     } catch {
       // handled by interceptor
     } finally {
@@ -117,7 +119,7 @@ export default function TaskDetailPage() {
   }
 
   return (
-    <Box maxW="lg">
+    <Box maxW="4xl" mx="auto">
       <Link as={RouterLink} to={`/projects/${projectId}`} color="blue.500" fontSize="sm" mb={4} display="inline-block">
         ← Back to project
       </Link>
@@ -159,7 +161,7 @@ export default function TaskDetailPage() {
             <PriorityTag priority={task.priority} />
           </HStack>
 
-          <Text>
+          <Text whiteSpace="pre-wrap">
             <strong>Description:</strong>{' '}
             {task.description || 'No description'}
           </Text>
@@ -168,24 +170,30 @@ export default function TaskDetailPage() {
           </Text>
 
 
-          <Box>
-            <Text mb={1} fontWeight="bold" fontSize="sm">
-              Update status:
-            </Text>
-            <Select
-              value={task.status}
-              onChange={handleStatusChange}
-              isDisabled={statusUpdating}
-              w="200px"
-              size="sm"
-            >
-              <option value="TODO">TODO</option>
-              <option value="IN_PROGRESS">IN PROGRESS</option>
-              <option value="DONE">DONE</option>
-            </Select>
-          </Box>
+          {isOwnerOrAdmin(projectOwnerId) && (
+            <Box>
+              <Text mb={1} fontWeight="bold" fontSize="sm">
+                Update status:
+              </Text>
+              <Select
+                value={task.status}
+                onChange={handleStatusChange}
+                isDisabled={statusUpdating}
+                w="200px"
+                size="sm"
+              >
+                <option value="TODO">TODO</option>
+                <option value="IN_PROGRESS">IN PROGRESS</option>
+                <option value="DONE">DONE</option>
+              </Select>
+            </Box>
+          )}
         </Stack>
       )}
+
+      <Divider my={8} />
+
+      <TaskActivityEditor projectId={projectId!} taskId={taskId!} />
     </Box>
   );
 }

@@ -148,15 +148,25 @@ export default function TaskListPage({ projectOwnerId: propOwnerId }: TaskListPa
                   <Td>{task.assigneeUsername || '—'}</Td>
                   <Td>
                     <HStack spacing={2}>
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        onClick={() =>
-                          navigate(`/projects/${projectId}/tasks/${task.id}`)
-                        }
-                      >
-                        View
-                      </Button>
+                      {isOwnerOrAdmin(projectOwnerId) || user?.id === task.assigneeId ? (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() =>
+                            navigate(`/projects/${projectId}/tasks/${task.id}`)
+                          }
+                        >
+                          View
+                        </Button>
+                      ) : (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          isDisabled
+                        >
+                          View
+                        </Button>
+                      )}
                       {isOwnerOrAdmin(projectOwnerId) && (
                         <Button
                           size="xs"
