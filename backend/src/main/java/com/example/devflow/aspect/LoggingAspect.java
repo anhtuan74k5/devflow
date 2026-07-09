@@ -46,6 +46,20 @@ public class LoggingAspect {
     }
 
     /**
+     * Pointcut targeting TaskService.updateTask().
+     */
+    @Pointcut("execution(* com.example.devflow.service.TaskService.updateTask(..))")
+    public void taskUpdatePointcut() {
+    }
+
+    /**
+     * Pointcut targeting TaskService.deleteTask().
+     */
+    @Pointcut("execution(* com.example.devflow.service.TaskService.deleteTask(..))")
+    public void taskDeletePointcut() {
+    }
+
+    /**
      * After returning advice that logs task status changes.
      */
     @AfterReturning(pointcut = "taskStatusUpdatePointcut()", returning = "result")
@@ -54,7 +68,7 @@ public class LoggingAspect {
             String content = String.format(
                     "Task '%s' status updated to %s",
                     taskResponse.getTitle(),
-                    taskResponse.getStatus()
+                    formatStatus(taskResponse.getStatus())
             );
             activityLogService.createLog(content, taskResponse.getProjectId());
         }
@@ -69,9 +83,49 @@ public class LoggingAspect {
             String content = String.format(
                     "Task '%s' created with status %s",
                     taskResponse.getTitle(),
-                    taskResponse.getStatus()
+                    formatStatus(taskResponse.getStatus())
             );
             activityLogService.createLog(content, taskResponse.getProjectId());
         }
+    }
+
+    /**
+     * After returning advice that logs task updates.
+     */
+    @AfterReturning(pointcut = "taskUpdatePointcut()", returning = "result")
+    public void logTaskUpdate(JoinPoint joinPoint, Object result) {
+        if (result instanceof TaskResponse taskResponse) {
+            String content = String.format(
+                    "Task '%s' updated",
+                    taskResponse.getTitle()
+            );
+            activityLogService.createLog(content, taskResponse.getProjectId());
+        }
+    }
+
+    /**
+     * After returning advice that logs task deletion.
+     * deleteTask() returns void, so we extract args from JoinPoint.
+     */
+    @AfterReturning(pointcut = "taskDeletePointcut()")
+    public void logTaskDeletion(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        if (args.length >= 2) {
+            Long projectId = (Long) args[0];
+            Long taskId = (Long) args[1];
+            String content = String.format(
+                    "Task #%d deleted",
+                    taskId
+            );
+            activityLogService.createLog(content, projectId);
+        }
+    }
+
+    /**
+     * Formats an enum status name like IN_PROGRESS to "IN PROGRESS".
+     */
+    private String formatStatus(Object status) {
+        if (status == null) return "";
+        return status.toString().replace("_", " ");
     }
 }

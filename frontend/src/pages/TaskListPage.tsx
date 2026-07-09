@@ -98,13 +98,15 @@ export default function TaskListPage({ projectOwnerId: propOwnerId }: TaskListPa
     <Box>
       <HStack justify="space-between" mb={4}>
         <Heading size="md">Tasks</Heading>
-        <Button
-          colorScheme="blue"
-          size="sm"
-          onClick={() => navigate(`/projects/${projectId}/tasks/new`)}
-        >
-          New task
-        </Button>
+        {isOwnerOrAdmin(projectOwnerId) && (
+          <Button
+            colorScheme="blue"
+            size="sm"
+            onClick={() => navigate(`/projects/${projectId}/tasks/new`)}
+          >
+            New task
+          </Button>
+        )}
       </HStack>
 
 

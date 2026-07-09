@@ -11,6 +11,7 @@ import com.example.devflow.exception.ResourceNotFoundException;
 import com.example.devflow.model.Role;
 import com.example.devflow.model.TaskStatus;
 import com.example.devflow.repository.ProjectRepository;
+import com.example.devflow.repository.TaskActivityRepository;
 import com.example.devflow.repository.TaskRepository;
 import com.example.devflow.repository.UserRepository;
 import com.example.devflow.service.AuthService;
@@ -34,15 +35,18 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final TaskActivityRepository taskActivityRepository;
     private final AuthService authService;
 
     public TaskServiceImpl(TaskRepository taskRepository,
                            ProjectRepository projectRepository,
                            UserRepository userRepository,
+                           TaskActivityRepository taskActivityRepository,
                            AuthService authService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.taskActivityRepository = taskActivityRepository;
         this.authService = authService;
     }
 
@@ -60,8 +64,10 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TaskResponse getTaskById(Long projectId, Long taskId) {
         Task task = findTaskOrThrow(projectId, taskId);
+        checkTaskAccess(task);
         return toTaskResponse(task);
     }
 
@@ -128,11 +134,14 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public void deleteTask(Long projectId, Long taskId) {
         Project project = findProjectOrThrow(projectId);
         checkProjectAccess(project);
 
         Task task = findTaskOrThrow(projectId, taskId);
+        // Delete associated task activities first to avoid FK constraint violation
+        taskActivityRepository.deleteByTaskId(taskId);
         taskRepository.delete(task);
     }
 
@@ -158,6 +167,27 @@ public class TaskServiceImpl implements TaskService {
         if (!project.getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You are not the owner of this project");
         }
+    }
+
+    /**
+     * Checks if the current user is allowed to view a specific task.
+     * Owner/Admin can view any task. Regular users can only view tasks
+     * they are assigned to.
+     */
+    private void checkTaskAccess(Task task) {
+        User currentUser = authService.getCurrentUser();
+        if (currentUser.getRole() == Role.ROLE_ADMIN) {
+            return;
+        }
+        // Project owner can view any task
+        if (task.getProject().getOwner().getId().equals(currentUser.getId())) {
+            return;
+        }
+        // Assignee can view their own task
+        if (task.getAssignee() != null && task.getAssignee().getId().equals(currentUser.getId())) {
+            return;
+        }
+        throw new AccessDeniedException("You are not assigned to this task");
     }
 
     private TaskResponse toTaskResponse(Task task) {

@@ -57,6 +57,8 @@ export default function AppLayout() {
         color="white"
         display={{ base: 'none', md: 'block' }}
         p={4}
+        borderRight="1px solid"
+        borderColor="whiteAlpha.300"
       >
         <Text fontSize="xl" fontWeight="bold" mb={6} px={2}>
           DevFlow
@@ -134,6 +136,7 @@ export default function AppLayout() {
                   {user?.username}
                 </MenuButton>
                 <MenuList>
+                  <MenuItem onClick={() => navigate('/profile')}>Profile</MenuItem>
                   <MenuItem onClick={handleLogout}>Logout</MenuItem>
                 </MenuList>
               </Menu>

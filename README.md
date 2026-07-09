@@ -78,6 +78,8 @@
 - Visual timeline UI component with connectors
 
 ### 🖥 Modern Frontend
+- **Cinematic Intro Animation** — Split-reveal animation with Framer Motion (concept inspired by Apple/Stripe)
+- **Landing Page** — Beautiful hero section with feature cards, tech stack showcase, and CTA buttons
 - Responsive sidebar layout with Chakra UI
 - Dashboard with project statistics (total, TODO, in-progress, done)
 - Real-time status updates via dropdown
@@ -392,9 +394,11 @@ http://localhost:8080/swagger-ui.html
 
 | Route | Page | Description |
 |-------|------|-------------|
+| `/` | LandingPage | Public landing page with hero, features, and CTA (shown when not logged in) |
+| `/` | DashboardPage | Overview with project statistics (shown when logged in) |
 | `/login` | LoginPage | User sign-in |
 | `/register` | RegisterPage | User registration |
-| `/` | DashboardPage | Overview with project statistics |
+| `/dashboard` | DashboardPage | Overview with project statistics |
 | `/projects` | ProjectListPage | Paginated project list |
 | `/projects/new` | CreateProjectPage | Create a new project |
 | `/projects/:id` | ProjectDetailPage | Project details + tasks |
@@ -402,6 +406,7 @@ http://localhost:8080/swagger-ui.html
 | `/projects/:id/tasks/:taskId` | TaskDetailPage | Task details + status update |
 | `/projects/:id/activities` | ActivityFeedPage | Per-project activity timeline |
 | `/admin/logs` | SystemLogsPage | Admin system-wide logs |
+| `/profile` | ProfilePage | User profile (id, username, role) |
 
 ---
 
