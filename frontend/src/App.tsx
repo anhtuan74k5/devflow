@@ -43,7 +43,7 @@ function AppContent() {
       {showIntro && <IntroAnimation onComplete={handleIntroComplete} />}
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={user ? <DashboardPage /> : <LandingPage />} />
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
