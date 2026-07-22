@@ -86,7 +86,9 @@ export default function TaskDetailPage() {
         `/projects/${projectId}/tasks/${taskId}/status`,
         { status: newStatus },
       );
-      toast.success(`Status changed to ${newStatus}`);
+      const displayStatus = newStatus === 'IN_PROGRESS' ? 'IN PROGRESS' : newStatus;
+      toast.success(`Status changed to ${displayStatus}`);
+
       navigate(`/projects/${projectId}`);
     } catch {
       // handled by interceptor
