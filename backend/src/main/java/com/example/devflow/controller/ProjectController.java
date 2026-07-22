@@ -3,6 +3,7 @@ package com.example.devflow.controller;
 import com.example.devflow.dto.request.CreateProjectRequest;
 import com.example.devflow.dto.response.ApiResponse;
 import com.example.devflow.dto.response.ProjectResponse;
+import com.example.devflow.dto.response.ProjectStatsResponse;
 import com.example.devflow.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -14,6 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 
 /**
  * REST controller for project management endpoints.
@@ -32,6 +36,16 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+    @GetMapping("/stats")
+    @Operation(summary = "Get project task statistics", description = "Returns task counts (TODO/IN_PROGRESS/DONE) for all accessible projects. Uses a single aggregate query instead of N+1 per project.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Stats retrieved successfully")
+    })
+    public ResponseEntity<ApiResponse<List<ProjectStatsResponse>>> getProjectStats() {
+        List<ProjectStatsResponse> stats = projectService.getProjectStats();
+        return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
     @GetMapping
     @Operation(summary = "Get all projects", description = "Returns a paginated list of all projects")
     @ApiResponses(value = {
@@ -42,6 +56,7 @@ public class ProjectController {
         Page<ProjectResponse> projects = projectService.getAllProjects(pageable);
         return ResponseEntity.ok(ApiResponse.success(projects));
     }
+
 
     @GetMapping("/{id}")
     @Operation(summary = "Get project by ID", description = "Returns a single project by its ID")

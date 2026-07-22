@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import client from '../api/client';
 import StatCard from '../components/StatCard';
-import type { Project, ApiResponse } from '../types';
+import type { ApiResponse } from '../types';
 
 interface ProjectStats {
   projectId: number;
@@ -23,13 +23,6 @@ interface ProjectStats {
   done: number;
 }
 
-interface PageContent<T> {
-  content: T[];
-  page?: { totalPages: number; totalElements: number };
-  totalPages?: number;
-  totalElements?: number;
-}
-
 export default function DashboardPage() {
   const [stats, setStats] = useState<ProjectStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,46 +30,10 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       try {
-        const projectsRes = await client.get<ApiResponse<PageContent<Project>>>('/projects', {
-          params: { page: 0, size: 100, sort: 'id,desc' },
-        });
-
-        const projects: Project[] = projectsRes.data.data.content || [];
-
-        const projectStats = await Promise.all(
-          projects.map(async (project) => {
-            const [todoRes, inProgressRes, doneRes] = await Promise.all([
-              client.get<ApiResponse<PageContent<unknown>>>(`/projects/${project.id}/tasks`, {
-                params: { status: 'TODO', page: 0, size: 1 },
-              }),
-              client.get<ApiResponse<PageContent<unknown>>>(`/projects/${project.id}/tasks`, {
-                params: { status: 'IN_PROGRESS', page: 0, size: 1 },
-              }),
-              client.get<ApiResponse<PageContent<unknown>>>(`/projects/${project.id}/tasks`, {
-                params: { status: 'DONE', page: 0, size: 1 },
-              }),
-            ]);
-
-            const getTotal = (resp: { data: ApiResponse<PageContent<unknown>> }): number =>
-              resp.data.data.page?.totalElements ||
-              resp.data.data.totalElements ||
-              0;
-            return {
-              projectId: project.id,
-              projectName: project.name,
-              total:
-                getTotal(todoRes) +
-                getTotal(inProgressRes) +
-                getTotal(doneRes),
-              todo: getTotal(todoRes),
-              inProgress: getTotal(inProgressRes),
-              done: getTotal(doneRes),
-            };
-
-          }),
-        );
-
-        setStats(projectStats);
+        // Single API call instead of N+1: /api/projects/stats returns
+        // task counts for all projects in one aggregate query.
+        const res = await client.get<ApiResponse<ProjectStats[]>>('/projects/stats');
+        setStats(res.data.data || []);
       } catch {
         // handled by interceptor
       } finally {
@@ -84,6 +41,7 @@ export default function DashboardPage() {
       }
     })();
   }, []);
+
 
   if (isLoading) {
     return (

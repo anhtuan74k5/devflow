@@ -2,8 +2,11 @@ package com.example.devflow.service;
 
 import com.example.devflow.dto.request.CreateProjectRequest;
 import com.example.devflow.dto.response.ProjectResponse;
+import com.example.devflow.dto.response.ProjectStatsResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 /**
  * Service interface for project management operations.
@@ -55,4 +58,13 @@ public interface ProjectService {
      * @throws com.example.devflow.exception.AccessDeniedException if the current user is not the owner
      */
     void deleteProject(Long id);
+
+    /**
+     * Returns task statistics for all projects accessible by the current user.
+     * Uses a single aggregate query instead of N+1 individual status queries.
+     *
+     * @return list of project stats (task counts grouped by status)
+     */
+    List<ProjectStatsResponse> getProjectStats();
 }
+

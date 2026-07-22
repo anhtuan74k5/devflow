@@ -9,9 +9,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
+
+    /**
+     * Returns task counts grouped by status for a list of project IDs.
+     * Used by the dashboard to avoid N+1 queries (one query instead of 3 per project).
+     */
+    @Query("SELECT t.project.id, t.status, COUNT(t) FROM Task t WHERE t.project.id IN :projectIds GROUP BY t.project.id, t.status")
+    List<Object[]> countByProjectIdsGroupByStatus(@Param("projectIds") List<Long> projectIds);
 
     /**
      * Uses @EntityGraph to eagerly fetch the assignee relationship,
