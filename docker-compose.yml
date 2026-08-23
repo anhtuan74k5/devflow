@@ -18,6 +18,23 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: devflow-rabbitmq
+    ports:
+      - "${RABBITMQ_PORT:-5673}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15673}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    networks:
+      - devflow-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     container_name: devflow-backend
@@ -25,6 +42,8 @@ services:
       - "8080:8080"
     depends_on:
       postgres-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
@@ -35,6 +54,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-123}
       JWT_SECRET: ${JWT_SECRET:-devflow-secret-key-must-be-at-least-256-bits-long-for-hs256}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      SPRING_RABBITMQ_HOST: rabbitmq
 
     restart: on-failure
     networks:

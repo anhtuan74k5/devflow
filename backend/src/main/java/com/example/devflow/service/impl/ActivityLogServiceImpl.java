@@ -1,5 +1,7 @@
 package com.example.devflow.service.impl;
 
+import com.example.devflow.config.RabbitMQConfig;
+import com.example.devflow.dto.ActivityLogMessage;
 import com.example.devflow.dto.response.ActivityLogResponse;
 import com.example.devflow.entity.ActivityLog;
 import com.example.devflow.entity.Project;
@@ -11,6 +13,7 @@ import com.example.devflow.repository.ActivityLogRepository;
 import com.example.devflow.repository.ProjectRepository;
 import com.example.devflow.service.ActivityLogService;
 import com.example.devflow.service.AuthService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,11 @@ import java.time.ZoneOffset;
  * <p>
  * Access control for viewing logs: ADMIN can view any project's logs,
  * regular users can only view logs of projects they own.
+ * <p>
+ * createLog() now acts as a PRODUCER: it publishes an ActivityLogMessage to the
+ * RabbitMQ "activity-log-exchange" (routing key "activity.log") instead of
+ * writing directly to the database. The message stays in the queue until a
+ * consumer (to be implemented in a later week) picks it up.
  */
 @Service
 public class ActivityLogServiceImpl implements ActivityLogService {
@@ -34,13 +42,16 @@ public class ActivityLogServiceImpl implements ActivityLogService {
     private final ActivityLogRepository activityLogRepository;
     private final ProjectRepository projectRepository;
     private final AuthService authService;
+    private final RabbitTemplate rabbitTemplate;
 
     public ActivityLogServiceImpl(ActivityLogRepository activityLogRepository,
                                   ProjectRepository projectRepository,
-                                  AuthService authService) {
+                                  AuthService authService,
+                                  RabbitTemplate rabbitTemplate) {
         this.activityLogRepository = activityLogRepository;
         this.projectRepository = projectRepository;
         this.authService = authService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Override
@@ -48,13 +59,31 @@ public class ActivityLogServiceImpl implements ActivityLogService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
-        ActivityLog log = new ActivityLog();
-        log.setContent(content);
-        log.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
-        log.setProject(project);
+        ActivityLogMessage message = new ActivityLogMessage(
+                content,
+                projectId,
+                LocalDateTime.now(ZoneOffset.UTC)
+        );
 
-        ActivityLog saved = activityLogRepository.save(log);
-        return toResponse(saved);
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.ACTIVITY_LOG_EXCHANGE,
+                RabbitMQConfig.ACTIVITY_LOG_ROUTING_KEY,
+                message
+        );
+
+        return toResponse(message);
+    }
+
+    /**
+     * Builds a response from a published message. Since the message is not yet
+     * persisted (no consumer yet), the id is null.
+     */
+    private ActivityLogResponse toResponse(ActivityLogMessage message) {
+        return ActivityLogResponse.builder()
+                .content(message.getContent())
+                .createdAt(message.getTimestamp())
+                .projectId(message.getProjectId())
+                .build();
     }
 
     @Override
